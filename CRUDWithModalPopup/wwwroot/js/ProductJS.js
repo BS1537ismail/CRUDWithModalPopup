@@ -1,156 +1,204 @@
-﻿$(document).ready(function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
     GetProducts();
 });
 
 /* Read Data */
 function GetProducts() {
-    $.getJSON('/product/GetProducts', function (response) {
-        var object = '';
-        if (!response || response.length === 0) {
-            object += '<tr>';
-            object += '<td colspan="4">Products not available</td>';
-            object += '</tr>';
-        } else {
-            $.each(response, function (index, item) {
-                object += '<tr>';
-                object += '<td>' + item.id + '</td>';
-                object += '<td>' + item.productName + '</td>';
-                object += '<td>' + item.price + '</td>';
-                object += '<td><a href="#" class="btn btn-primary btn-sm" onclick="Edit(' + item.id + ')">Edit</a> ';
-                object += '<a href="#" class="btn btn-danger btn-sm" onclick="Delete(' + item.id + ')">Delete</a></td>';
-                object += '</tr>';
-            });
-        }
-        $('#tblBody').html(object);
-    }).fail(function () {
-        alert('Unable to read the data.');
-    });
+    fetch('/product/GetProducts')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            let tableBody = document.getElementById('tblBody');
+            tableBody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                let row = document.createElement('tr');
+                let cell = document.createElement('td');
+                cell.colSpan = 4;
+                cell.textContent = 'Products not available';
+                row.appendChild(cell);
+                tableBody.appendChild(row);
+            } else {
+                data.forEach(item => {
+                    let row = document.createElement('tr');
+
+                    row.innerHTML = `
+                        <td>${item.id}</td>
+                        <td>${item.productName}</td>
+                        <td>${item.price}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="Edit(${item.id})">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="Delete(${item.id})">Delete</button>
+                        </td>
+                    `;
+
+                    tableBody.appendChild(row);
+                });
+            }
+        })
+        .catch(error => {
+            alert('Unable to read the data: ' + error.message);
+        });
 }
 
-$('#btnAdd').click(function () {
-    $('#Id').val('0');
-    $('#ProductName').val('');
-    $('#Price').val('');
-    $('#modalTitle').text('Add Product');
-    $('#Save').show();
-    $('#Update').hide();
-    $('#ProductModal').modal('show');
+document.getElementById('btnAdd').addEventListener('click', function () {
+    document.getElementById('Id').value = '0';
+    document.getElementById('ProductName').value = '';
+    document.getElementById('Price').value = '';
+    document.getElementById('modalTitle').textContent = 'Add Product';
+    document.getElementById('Save').style.display = 'inline';
+    document.getElementById('Update').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('ProductModal')).show();
 });
 
 /* Insert Data */
 function Insert() {
-    if (!Validate()) {
-        return;
-    }
+    if (!Validate()) return;
 
-    var formData = {
-        id: $('#Id').val(),
-        ProductName: $('#ProductName').val(),
-        Price: $('#Price').val()
-    };
+    let formData = new FormData();
+    formData.append('Id', document.getElementById('Id').value);
+    formData.append('ProductName', document.getElementById('ProductName').value);
+    formData.append('Price', document.getElementById('Price').value);
 
-    $.post('/product/Insert', formData, function (response) {
-        if (!response) {
-            alert('Unable to save the data..');
-        } else {
-            HideModal();
-            GetProducts();
-            alert(response);
-        }
-    }).fail(function () {
-        alert('Unable to save the data..');
-    });
+    fetch('/product/Insert', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (!data) {
+                alert('Unable to save the data.');
+            } else {
+                HideModal();
+                GetProducts();
+                alert(data);
+            }
+        })
+        .catch(error => {
+            alert('Unable to save the data: ' + error.message);
+        });
 }
+
 
 /* Hide Modal */
 function HideModal() {
-    $('#ProductModal').modal('hide');
+    let modalElement = document.getElementById('ProductModal');
+    let modal = bootstrap.Modal.getInstance(modalElement);
+    modal.hide();
     ClearData();
 }
 
 function ClearData() {
-    $('#Id').val('0');
-    $('#ProductName').val('');
-    $('#Price').val('');
-    $('#ProductName').css('border-color', 'lightgrey');
-    $('#Price').css('border-color', 'lightgrey');
+    document.getElementById('Id').value = '0';
+    document.getElementById('ProductName').value = '';
+    document.getElementById('Price').value = '';
+    document.getElementById('ProductName').style.borderColor = 'lightgrey';
+    document.getElementById('Price').style.borderColor = 'lightgrey';
 }
 
 function Validate() {
-    var isValid = true;
-    if ($('#ProductName').val().trim() === "") {
-        $('#ProductName').css('border-color', 'Red');
+    let isValid = true;
+    let productName = document.getElementById('ProductName');
+    let price = document.getElementById('Price');
+
+    if (productName.value.trim() === "") {
+        productName.style.borderColor = 'Red';
         isValid = false;
     } else {
-        $('#ProductName').css('border-color', 'lightgrey');
+        productName.style.borderColor = 'lightgrey';
     }
-    if ($('#Price').val().trim() === "") {
-        $('#Price').css('border-color', 'Red');
+
+    if (price.value.trim() === "") {
+        price.style.borderColor = 'Red';
         isValid = false;
     } else {
-        $('#Price').css('border-color', 'lightgrey');
+        price.style.borderColor = 'lightgrey';
     }
+
     return isValid;
 }
 
-$('#ProductName').change(Validate);
-$('#Price').change(Validate);
+document.getElementById('ProductName').addEventListener('change', Validate);
+document.getElementById('Price').addEventListener('change', Validate);
 
 /* Edit */
 function Edit(id) {
-    $.get('/product/Edit', { id: id }, function (response) {
-        if (!response) {
-            alert('Unable to read the data..');
-        } else {
-            $('#ProductModal').modal('show');
-            $('#modalTitle').text('Update Product');
-            $('#Save').hide();
-            $('#Update').show();
-            $('#Id').val(response.id);
-            $('#ProductName').val(response.productName);
-            $('#Price').val(response.price);
-        }
-    }).fail(function () {
-        alert('Unable to read the data..');
-    });
+    fetch('/product/Edit?id=' + id)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!data) {
+                alert('Data not available with this id ' + id);
+            } else {
+                document.getElementById('modalTitle').textContent = 'Update Product';
+                document.getElementById('Save').style.display = 'none';
+                document.getElementById('Update').style.display = 'inline';
+                document.getElementById('Id').value = data.id;
+                document.getElementById('ProductName').value = data.productName;
+                document.getElementById('Price').value = data.price;
+                new bootstrap.Modal(document.getElementById('ProductModal')).show();
+            }
+        })
+        .catch(error => {
+            alert('Unable to read the data: ' + error.message);
+        });
 }
 
 /* Update Data */
 function Update() {
-    if (!Validate()) {
-        return;
-    }
+    if (!Validate()) return;
 
-    var formData = {
-        Id: $('#Id').val(),
-        ProductName: $('#ProductName').val(),
-        Price: $('#Price').val()
-    };
+    let formData = new FormData();
+    formData.append('Id', document.getElementById('Id').value);
+    formData.append('ProductName', document.getElementById('ProductName').value);
+    formData.append('Price', document.getElementById('Price').value);
 
-    $.post('/product/Update', formData, function (response) {
-        if (!response) {
-            alert('Unable to save the data.');
-        } else {
-            alert(response);
-            HideModal();
-            GetProducts();
-        }
-    }).fail(function () {
-        alert('Unable to save the data.');
-    });
-}
-
-function Delete(id) {
-    if (confirm('Are you sure to delete this data?')) {
-        $.post('/product/Delete', { id: id }, function (response) {
-            if (!response) {
-                alert('Unable to delete the data..');
+    fetch('/product/Update', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (!data) {
+                alert('Unable to save the data.');
             } else {
+                alert(data);
+                HideModal();
                 GetProducts();
-                alert(response);
             }
-        }).fail(function () {
-            alert('Unable to delete the data..');
+        })
+        .catch(error => {
+            alert('Unable to save the data: ' + error.message);
         });
+}
+
+
+/* Delete Data */
+function Delete(id) {
+    if (confirm('Are you sure you want to delete this product?')) {
+        fetch('/product/Delete?id=' + id, {
+            method: 'POST', // In your controller, the Delete method uses [HttpPost]
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (!data) {
+                    alert('Unable to delete the data.');
+                } else {
+                    GetProducts(); // Refresh the table after deletion
+                    alert(data);
+                }
+            })
+            .catch(error => {
+                alert('Unable to delete the data: ' + error.message);
+            });
     }
 }
+
