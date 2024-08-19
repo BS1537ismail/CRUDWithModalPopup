@@ -38,16 +38,26 @@ namespace CRUDWithModalPopup.Controllers
             return Json(data);
         }
         [HttpPost]
-        public JsonResult Edit(Product product)
+        public JsonResult Update(Product product)
         {
             if (ModelState.IsValid)
             {
-                dbcontext.Products.Update(product);
-                dbcontext.SaveChanges();
-                return Json("Product Updated successfully");
+                var existingProduct = dbcontext.Products.Find(product.Id);
+                if (existingProduct != null)
+                {
+                    existingProduct.ProductName = product.ProductName;
+                    existingProduct.Price = product.Price;
+
+                    dbcontext.Products.Update(existingProduct);
+                    dbcontext.SaveChanges();
+
+                    return Json("Product updated successfully.");
+                }
+                return Json("Product not found.");
             }
-            return Json("Model validation failed..");
+            return Json("Model validation failed.");
         }
+
         [HttpPost]
         public JsonResult Delete(int id)
         {
