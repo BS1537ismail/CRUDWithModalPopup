@@ -5,16 +5,24 @@
 
 <h3>@ViewData["Title"]</h3>
 <hr />
-<div>
-    <button class="btn btn-primary mb-2" id="btnAdd">Add Product</button>
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <button class="btn btn-primary" id="btnAdd">Add Product</button>
+
+    <div class="d-flex">
+        <input type="text" id="searchInput" class="form-control me-2" placeholder="Search by Product Name or Price" style="width: 300px;">
+        <button class="btn btn-primary" onclick="SearchProducts()">Search</button>
+        <button class="btn btn-secondary ms-2" onclick="GetProducts()">Reset</button>
+    </div>
 </div>
+
+
 <div class="container">
     <table class="table table-success table-striped table-responsive table-hover">
         <thead>
             <tr>
-                <th>Id</th>
+                <th>Serial No</th>
                 <th>Product Name</th>
-                <th>Price</th>
+                <th id="priceHeader" style="cursor: pointer;">Price</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -22,32 +30,35 @@
         </tbody>
     </table>
 </div>
-
-<div class="modal" id="ProductModal">
+<div class="modal fade" id="ProductModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title" id="modalTitle"></h3>
+                <h5 class="modal-title" id="modalTitle">Product Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <input type="hidden" id="Id" value="0" />
-                <div class="mb-2">
-                    <label for="ProductName">Product Name</label>
-                    <input type="text" id="ProductName" class="form-control" placeholder="Product Name" />
-                </div>
-                <div class="mb-2">
-                    <label for="Price">Price</label>
-                    <input type="text" id="Price" class="form-control" placeholder="Product Price" />
-                </div>
+                <form>
+                    <div class="mb-3">
+                        <label for="ProductName" class="form-label">Product Name</label>
+                        <input type="text" class="form-control" id="ProductName">
+                    </div>
+                    <div class="mb-3">
+                        <label for="Price" class="form-label">Price</label>
+                        <input type="text" class="form-control" id="Price">
+                    </div>
+                    <input type="hidden" id="Id" value="0">
+                </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" id="Save" type="button" onclick="Insert();">Save</button>
-                <button class="btn btn-success" id="Update" type="button" onclick="Update();" style="display:none">Update</button>
-                <button class="btn btn-danger" data-bs-dismiss="modal" onclick="HideModal();">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="Save" onclick="Insert()" style="display: none;">Save</button>
+                <button type="button" class="btn btn-primary" id="Update" onclick="Update()" style="display: none;">Update</button>
             </div>
         </div>
     </div>
 </div>
+
 
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/js/productjs.js"></script>

@@ -1,9 +1,16 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+﻿
+document.addEventListener('DOMContentLoaded', function () {
     GetProducts();
 });
 
+let ascending = true;
+document.getElementById('priceHeader').addEventListener('click', function () {
+    ascending = !ascending;
+    GetProducts();
+})
 /* Read Data */
 function GetProducts() {
+    document.getElementById('searchInput').value = '';
     fetch('/product/GetProducts')
         .then(response => {
             if (!response.ok) {
@@ -18,21 +25,25 @@ function GetProducts() {
             if (!data || data.length === 0) {
                 let row = document.createElement('tr');
                 let cell = document.createElement('td');
-                cell.colSpan = 4;
+                cell.colSpan = 5;
                 cell.textContent = 'Products not available';
                 row.appendChild(cell);
                 tableBody.appendChild(row);
             } else {
+                let serialNumber = 0;
+                data.sort((a, b) => ascending ? a.price - b.price : b.price - a.price);
+
                 data.forEach(item => {
                     let row = document.createElement('tr');
-
+                    serialNumber++;
                     row.innerHTML = `
-                        <td>${item.id}</td>
+                        <td>${serialNumber}</td>
                         <td>${item.productName}</td>
                         <td>${item.price}</td>
                         <td>
                             <button class="btn btn-primary btn-sm" onclick="Edit(${item.id})">Edit</button>
                             <button class="btn btn-danger btn-sm" onclick="Delete(${item.id})">Delete</button>
+                            <button class="btn btn-info btn-sm" onclick="ShowDetails(${item.id})">Details</button>
                         </td>
                     `;
 
@@ -179,7 +190,96 @@ function Update() {
             alert('Unable to save the data: ' + error.message);
         });
 }
+/* Details of Product */
+function ShowDetails(id) {
+    fetch('/product/Details?id=' + id)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!data) {
+                alert('Data not available for this product.');
+            } else {
+                // Populate the modal with the product details
+                document.getElementById('modalTitle').textContent = 'Product Details';
+                document.getElementById('Id').value = data.id;
+                document.getElementById('ProductName').value = data.productName;
+                document.getElementById('Price').value = data.price;
 
+                // Disable fields since this is just a details view
+                document.getElementById('ProductName').disabled = true;
+                document.getElementById('Price').disabled = true;
+                document.getElementById('Save').style.display = 'none';
+                document.getElementById('Update').style.display = 'none';
+
+                new bootstrap.Modal(document.getElementById('ProductModal')).show();
+
+                document.getElementById('ProductModal').addEventListener('hidden.bs.modal', function () {
+                    document.getElementById('ProductName').disabled = false;
+                    document.getElementById('Price').disabled = false;
+                    document.getElementById('Save').style.display = 'inline';
+                    document.getElementById('Update').style.display = 'none';
+                });
+
+                
+            }
+        })
+        .catch(error => {
+            alert('Unable to fetch product details: ' + error.message);
+        });
+}
+
+/*Search product by Name or Price */
+function SearchProducts() {
+    const query = document.getElementById('searchInput').value.trim();
+
+    if (query === "") {
+        GetProducts();
+        return;
+    }
+
+    fetch(`/product/Search?query=${encodeURIComponent(query)}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            let tableBody = document.getElementById('tblBody');
+            tableBody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                let row = document.createElement('tr');
+                let cell = document.createElement('td');
+                cell.colSpan = 4;
+                cell.textContent = 'No products found';
+                row.appendChild(cell);
+                tableBody.appendChild(row);
+            } else {
+                data.forEach((item, index) => {
+                    let row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${item.productName}</td>
+                        <td>${item.price}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="Edit(${item.id})">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="Delete(${item.id})">Delete</button>
+                            <button class="btn btn-info btn-sm" onclick="ShowDetails(${item.id})">Details</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+        })
+        .catch(error => {
+            alert('Unable to search the data: ' + error.message);
+        });
+}
 
 /* Delete Data */
 function Delete(id) {

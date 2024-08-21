@@ -1,5 +1,6 @@
 ﻿using CRUDWithModalPopup.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CRUDWithModalPopup.Controllers
 {
@@ -57,6 +58,32 @@ namespace CRUDWithModalPopup.Controllers
             }
             return Json("Model validation failed.");
         }
+
+        [HttpGet]
+        public JsonResult Details(int id)
+        {
+            var data = dbcontext.Products.Find(id);
+            if (data != null)
+            {
+                return Json(data);
+            }
+            return Json(null);
+        }
+
+        [HttpGet]
+        public IActionResult Search(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return Json(new List<Product>());
+            }
+
+            var products = dbcontext.Products
+                .Where(p => p.ProductName.Contains(query) || p.Price.ToString() == query).ToList();
+
+            return Json(products);
+        }
+
 
         [HttpPost]
         public JsonResult Delete(int id)
