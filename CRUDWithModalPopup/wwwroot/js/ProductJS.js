@@ -1,60 +1,55 @@
 ﻿
-document.addEventListener('DOMContentLoaded', function () {
-    GetProducts();
-});
+//document.addEventListener('DOMContentLoaded', function () {
+//    //GetProducts();
+//});
 
-let ascending = true;
-document.getElementById('priceHeader').addEventListener('click', function () {
-    ascending = !ascending;
-    GetProducts();
-})
-/* Read Data */
-function GetProducts() {
-    document.getElementById('searchInput').value = '';
-    fetch('/product/GetProducts')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            let tableBody = document.getElementById('tblBody');
-            tableBody.innerHTML = '';
+///* Read Data */
+////function GetProducts() {
+////    document.getElementById('searchInput').value = '';
+////    fetch('/product/GetProducts')
+////        .then(response => {
+////            if (!response.ok) {
+////                throw new Error('Network response was not ok');
+////            }
+////            return response.json();
+////        })
+////        .then(data => {
+////            let tableBody = document.getElementById('tblBody');
+////            tableBody.innerHTML = '';
 
-            if (!data || data.length === 0) {
-                let row = document.createElement('tr');
-                let cell = document.createElement('td');
-                cell.colSpan = 5;
-                cell.textContent = 'Products not available';
-                row.appendChild(cell);
-                tableBody.appendChild(row);
-            } else {
-                let serialNumber = 0;
-                data.sort((a, b) => ascending ? a.price - b.price : b.price - a.price);
+////            if (!data || data.length === 0) {
+////                let row = document.createElement('tr');
+////                let cell = document.createElement('td');
+////                cell.colSpan = 5;
+////                cell.textContent = 'Products not available';
+////                row.appendChild(cell);
+////                tableBody.appendChild(row);
+////            } else {
+////                let serialNumber = 0;
+////                data.sort((a, b) => ascending ? a.price - b.price : b.price - a.price);
 
-                data.forEach(item => {
-                    let row = document.createElement('tr');
-                    serialNumber++;
-                    row.innerHTML = `
-                        <td>${serialNumber}</td>
-                        <td>${item.productName}</td>
-                        <td>${item.price}</td>
-                        <td>
-                            <button class="btn btn-primary btn-sm" onclick="Edit(${item.id})">Edit</button>
-                            <button class="btn btn-danger btn-sm" onclick="Delete(${item.id})">Delete</button>
-                            <button class="btn btn-info btn-sm" onclick="ShowDetails(${item.id})">Details</button>
-                        </td>
-                    `;
+////                data.forEach(item => {
+////                    let row = document.createElement('tr');
+////                    serialNumber++;
+////                    row.innerHTML = `
+////                        <td>${serialNumber}</td>
+////                        <td>${item.productName}</td>
+////                        <td>${item.price}</td>
+////                        <td>
+////                            <button class="btn btn-primary btn-sm" onclick="Edit(${item.id})">Edit</button>
+////                            <button class="btn btn-danger btn-sm" onclick="Delete(${item.id})">Delete</button>
+////                            <button class="btn btn-info btn-sm" onclick="ShowDetails(${item.id})">Details</button>
+////                        </td>
+////                    `;
 
-                    tableBody.appendChild(row);
-                });
-            }
-        })
-        .catch(error => {
-            alert('Unable to read the data: ' + error.message);
-        });
-}
+////                    tableBody.appendChild(row);
+////                });
+////            }
+////        })
+////        .catch(error => {
+////            alert('Unable to read the data: ' + error.message);
+////        });
+////}
 
 document.getElementById('btnAdd').addEventListener('click', function () {
     document.getElementById('Id').value = '0';
@@ -63,9 +58,9 @@ document.getElementById('btnAdd').addEventListener('click', function () {
     document.getElementById('modalTitle').textContent = 'Add Product';
     document.getElementById('Save').style.display = 'inline';
     document.getElementById('Update').style.display = 'none';
+    document.getElementById('Search').value = "";
     new bootstrap.Modal(document.getElementById('ProductModal')).show();
 });
-
 /* Insert Data */
 function Insert() {
     if (!Validate()) return;
@@ -74,7 +69,6 @@ function Insert() {
     formData.append('Id', document.getElementById('Id').value);
     formData.append('ProductName', document.getElementById('ProductName').value);
     formData.append('Price', document.getElementById('Price').value);
-
     fetch('/product/Insert', {
         method: 'POST',
         body: formData
@@ -85,7 +79,7 @@ function Insert() {
                 alert('Unable to save the data.');
             } else {
                 HideModal();
-                GetProducts();
+                location.reload();
                 alert(data);
             }
         })
@@ -110,28 +104,34 @@ function ClearData() {
     document.getElementById('ProductName').style.borderColor = 'lightgrey';
     document.getElementById('Price').style.borderColor = 'lightgrey';
 }
-
 function Validate() {
-    let isValid = true;
-    let productName = document.getElementById('ProductName');
-    let price = document.getElementById('Price');
+    return new Promise((resolve, reject) => {
+        let isValid = true;
+        let productName = document.getElementById('ProductName');
+        let price = document.getElementById('Price');
 
-    if (productName.value.trim() === "") {
-        productName.style.borderColor = 'Red';
-        isValid = false;
-    } else {
-        productName.style.borderColor = 'lightgrey';
-    }
+        if (productName.value.trim() === "") {
+            productName.style.borderColor = 'Red';
+            isValid = false;
+        } else {
+            productName.style.borderColor = 'lightgrey';
+        }
 
-    if (price.value.trim() === "") {
-        price.style.borderColor = 'Red';
-        isValid = false;
-    } else {
-        price.style.borderColor = 'lightgrey';
-    }
+        if (price.value.trim() === "") {
+            price.style.borderColor = 'Red';
+            isValid = false;
+        } else {
+            price.style.borderColor = 'lightgrey';
+        }
 
-    return isValid;
+        if (isValid) {
+            resolve("Validation passed");
+        } else {
+            reject("Validation failed");
+        }
+    });
 }
+
 
 document.getElementById('ProductName').addEventListener('change', Validate);
 document.getElementById('Price').addEventListener('change', Validate);
@@ -183,7 +183,7 @@ function Update() {
             } else {
                 alert(data);
                 HideModal();
-                GetProducts();
+                location.reload();
             }
         })
         .catch(error => {
@@ -233,53 +233,53 @@ function ShowDetails(id) {
 }
 
 /*Search product by Name or Price */
-function SearchProducts() {
-    const query = document.getElementById('searchInput').value.trim();
+//function SearchProducts() {
+//    const query = document.getElementById('searchInput').value.trim();
 
-    if (query === "") {
-        GetProducts();
-        return;
-    }
+//    if (query === "") {
+//        GetProducts();
+//        return;
+//    }
 
-    fetch(`/product/Search?query=${encodeURIComponent(query)}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            let tableBody = document.getElementById('tblBody');
-            tableBody.innerHTML = '';
+//    fetch(`/product/Search?query=${encodeURIComponent(query)}`)
+//        .then(response => {
+//            if (!response.ok) {
+//                throw new Error('Network response was not ok');
+//            }
+//            return response.json();
+//        })
+//        .then(data => {
+//            let tableBody = document.getElementById('tblBody');
+//            tableBody.innerHTML = '';
 
-            if (!data || data.length === 0) {
-                let row = document.createElement('tr');
-                let cell = document.createElement('td');
-                cell.colSpan = 4;
-                cell.textContent = 'No products found';
-                row.appendChild(cell);
-                tableBody.appendChild(row);
-            } else {
-                data.forEach((item, index) => {
-                    let row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${item.productName}</td>
-                        <td>${item.price}</td>
-                        <td>
-                            <button class="btn btn-primary btn-sm" onclick="Edit(${item.id})">Edit</button>
-                            <button class="btn btn-danger btn-sm" onclick="Delete(${item.id})">Delete</button>
-                            <button class="btn btn-info btn-sm" onclick="ShowDetails(${item.id})">Details</button>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-            }
-        })
-        .catch(error => {
-            alert('Unable to search the data: ' + error.message);
-        });
-}
+//            if (!data || data.length === 0) {
+//                let row = document.createElement('tr');
+//                let cell = document.createElement('td');
+//                cell.colSpan = 4;
+//                cell.textContent = 'No products found';
+//                row.appendChild(cell);
+//                tableBody.appendChild(row);
+//            } else {
+//                data.forEach((item, index) => {
+//                    let row = document.createElement('tr');
+//                    row.innerHTML = `
+//                        <td>${index + 1}</td>
+//                        <td>${item.productName}</td>
+//                        <td>${item.price}</td>
+//                        <td>
+//                            <button class="btn btn-primary btn-sm" onclick="Edit(${item.id})">Edit</button>
+//                            <button class="btn btn-danger btn-sm" onclick="Delete(${item.id})">Delete</button>
+//                            <button class="btn btn-info btn-sm" onclick="ShowDetails(${item.id})">Details</button>
+//                        </td>
+//                    `;
+//                    tableBody.appendChild(row);
+//                });
+//            }
+//        })
+//        .catch(error => {
+//            alert('Unable to search the data: ' + error.message);
+//        });
+//}
 
 /* Delete Data */
 function Delete(id) {
@@ -292,7 +292,7 @@ function Delete(id) {
                 if (!data) {
                     alert('Unable to delete the data.');
                 } else {
-                    GetProducts(); // Refresh the table after deletion
+                    location.reload(); // Refresh the table after deletion
                     alert(data);
                 }
             })

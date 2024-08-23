@@ -1,4 +1,4 @@
-﻿@model CRUDWithModalPopup.Models.Product;
+﻿@model IEnumerable<CRUDWithModalPopup.Models.Product>;
 @{
     ViewData["Title"] = "Product List";
 }
@@ -8,13 +8,28 @@
 <div class="d-flex justify-content-between align-items-center mb-2">
     <button class="btn btn-primary" id="btnAdd">Add Product</button>
 
-    <div class="d-flex">
+    @* <div class="d-flex" asp-controller ="Product" asp-action="Index">
         <input type="text" id="searchInput" class="form-control me-2" placeholder="Search by Product Name or Price" style="width: 300px;">
         <button class="btn btn-primary" onclick="SearchProducts()">Search</button>
         <button class="btn btn-secondary ms-2" onclick="GetProducts()">Reset</button>
-    </div>
+    </div> *@
+    <form asp-controller="Product" asp-action="Index" method="get">
+        <div class="input-group mb-3">
+            <input id ="Search" type="text" name="search" class="form-control me-2" placeholder="Search by Product Name or Price"
+                   value="@ViewData["CurrentFilter"]" style="width: 300px;">
+            <button class="btn btn-primary" type="submit">Search</button>
+        </div>
+    </form>
 </div>
-
+@* <div class="d-flex justify-content-between align-items-center mb-2">
+    <form asp-controller="Product" asp-action="Index" method="get">
+        <div class="input-group mb-3">
+            <input type="text" name="searchString" class="form-control" placeholder="Search by Product Name or Price" value="@ViewData["CurrentFilter"]">
+            <button class="btn btn-primary" type="submit">Search</button>
+        </div>
+    </form>
+    <button class="btn btn-primary" id="btnAdd">Add Product</button>
+</div> *@
 
 <div class="container">
     <table class="table table-success table-striped table-responsive table-hover">
@@ -22,11 +37,31 @@
             <tr>
                 <th>Serial No</th>
                 <th>Product Name</th>
-                <th id="priceHeader" style="cursor: pointer;">Price</th>
+                <th>
+                    <a asp-action="Index" asp-route-sortOrder="@ViewData["PriceSortParm"]">Price</a>
+                </th>
                 <th>Action</th>
             </tr>
         </thead>
         <tbody id="tblBody">
+            @{
+                var SerialNo = 1;
+            }
+            @foreach(var item in Model)
+            {
+
+                <tr>
+                    <td>@SerialNo</td>
+                    <td>@item.ProductName</td>
+                    <td>@item.Price</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="Edit(@item.Id)">Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="Delete(@item.Id)">Delete</button>
+                        <button class="btn btn-info btn-sm" onclick="ShowDetails(@item.Id)">Details</button>
+                   </td>
+                </tr>
+                SerialNo++;
+            }
         </tbody>
     </table>
 </div>

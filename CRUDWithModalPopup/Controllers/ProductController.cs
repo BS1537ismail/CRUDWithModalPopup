@@ -1,6 +1,8 @@
 ﻿using CRUDWithModalPopup.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CRUDWithModalPopup.Controllers
 {
@@ -12,9 +14,30 @@ namespace CRUDWithModalPopup.Controllers
         {
             this.dbcontext = dbcontext;
         }
-        public IActionResult Index()
+        public IActionResult Index(string sortOrder, string search)
         {
-            return View();
+            ViewData["PriceSortParm"] = String.IsNullOrEmpty(sortOrder) ? "price_desc" : "";
+
+            var data = dbcontext.Products.AsQueryable();
+            var tempData = data;
+            if (!string.IsNullOrEmpty(search))
+            {
+                data = data.Where(x => x.ProductName.Contains(search) || (x.Price.ToString() == search));
+            }
+            switch (sortOrder)
+            {
+                case "price_desc":
+                    data = data.OrderByDescending(s => s.Price).ThenBy(s=>s.ProductName);
+                    break;
+                default:
+                    data = data.OrderBy(s => s.Price).ThenBy(s => s.ProductName);
+                    break;
+            }
+            if (data.IsNullOrEmpty())
+            {
+                data = tempData;
+            }
+            return View(data);
         }
         public JsonResult GetProducts()
         {
@@ -43,18 +66,10 @@ namespace CRUDWithModalPopup.Controllers
         {
             if (ModelState.IsValid)
             {
-                var existingProduct = dbcontext.Products.Find(product.Id);
-                if (existingProduct != null)
-                {
-                    existingProduct.ProductName = product.ProductName;
-                    existingProduct.Price = product.Price;
-
-                    dbcontext.Products.Update(existingProduct);
+                    dbcontext.Products.Update(product);
                     dbcontext.SaveChanges();
 
                     return Json("Product updated successfully.");
-                }
-                return Json("Product not found.");
             }
             return Json("Model validation failed.");
         }
