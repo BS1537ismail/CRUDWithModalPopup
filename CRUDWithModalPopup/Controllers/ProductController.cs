@@ -17,9 +17,10 @@ namespace CRUDWithModalPopup.Controllers
         public IActionResult Index(string sortOrder, string search)
         {
             ViewData["PriceSortParm"] = String.IsNullOrEmpty(sortOrder) ? "price_desc" : "";
+            ViewData["CurrentFilter"] = search;
 
             var data = dbcontext.Products.AsQueryable();
-            var tempData = data;
+        
             if (!string.IsNullOrEmpty(search))
             {
                 data = data.Where(x => x.ProductName.Contains(search) || (x.Price.ToString() == search));
@@ -33,10 +34,7 @@ namespace CRUDWithModalPopup.Controllers
                     data = data.OrderBy(s => s.Price).ThenBy(s => s.ProductName);
                     break;
             }
-            if (data.IsNullOrEmpty())
-            {
-                data = tempData;
-            }
+            
             return View(data);
         }
         public JsonResult GetProducts()
@@ -47,7 +45,7 @@ namespace CRUDWithModalPopup.Controllers
         [HttpPost]
         public JsonResult Insert(Product product)
         {
-            if(ModelState.IsValid)
+            if (ModelState.IsValid)
             {
                 dbcontext.Products.Add(product);
                 dbcontext.SaveChanges();

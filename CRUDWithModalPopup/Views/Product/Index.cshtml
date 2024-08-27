@@ -1,35 +1,25 @@
 ﻿@model IEnumerable<CRUDWithModalPopup.Models.Product>;
 @{
     ViewData["Title"] = "Product List";
+    string searchTerm = ViewData["CurrentFilter"]?.ToString();
 }
 
 <h3>@ViewData["Title"]</h3>
 <hr />
 <div class="d-flex justify-content-between align-items-center mb-2">
-    <button class="btn btn-primary" id="btnAdd">Add Product</button>
-
-    @* <div class="d-flex" asp-controller ="Product" asp-action="Index">
-        <input type="text" id="searchInput" class="form-control me-2" placeholder="Search by Product Name or Price" style="width: 300px;">
-        <button class="btn btn-primary" onclick="SearchProducts()">Search</button>
-        <button class="btn btn-secondary ms-2" onclick="GetProducts()">Reset</button>
-    </div> *@
-    <form asp-controller="Product" asp-action="Index" method="get">
-        <div class="input-group mb-3">
-            <input id ="Search" type="text" name="search" class="form-control me-2" placeholder="Search by Product Name or Price"
-                   value="@ViewData["CurrentFilter"]" style="width: 300px;">
-            <button class="btn btn-primary" type="submit">Search</button>
-        </div>
-    </form>
+   
+        
+            <button class="btn btn-primary" id="btnAdd">Add Product</button>
+          
+            <form asp-controller="Product" asp-action="Index" method="get">
+                <div class="input-group mb-3">
+                    <input type="text" name="search" class="form-control me-2" placeholder="Search by Product Name or Price"
+                           value="@ViewData["CurrentFilter"]" style="width: 300px;">
+                    <button class="btn btn-primary" id="Search" type="submit">Search</button>
+                </div>
+            </form>
+        
 </div>
-@* <div class="d-flex justify-content-between align-items-center mb-2">
-    <form asp-controller="Product" asp-action="Index" method="get">
-        <div class="input-group mb-3">
-            <input type="text" name="searchString" class="form-control" placeholder="Search by Product Name or Price" value="@ViewData["CurrentFilter"]">
-            <button class="btn btn-primary" type="submit">Search</button>
-        </div>
-    </form>
-    <button class="btn btn-primary" id="btnAdd">Add Product</button>
-</div> *@
 
 <div class="container">
     <table class="table table-success table-striped table-responsive table-hover">
@@ -63,7 +53,13 @@
                 SerialNo++;
             }
         </tbody>
+        
     </table>
+    @if (!string.IsNullOrEmpty(searchTerm))
+    {
+        <button onclick="window.location.href='/Product'" class="btn btn-primary">Back</button>
+    }
+    
 </div>
 <div class="modal fade" id="ProductModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
     <div class="modal-dialog">
